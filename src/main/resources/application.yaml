@@ -1,3 +1,66 @@
 spring:
   application:
     name: Aurora
+  
+  datasource:
+    url: jdbc:h2:mem:aurora
+    driver-class-name: org.h2.Driver
+    username: sa
+    password: 
+  
+  jpa:
+    database-platform: org.hibernate.dialect.H2Dialect
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+  
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+  
+  cache:
+    type: simple
+
+server:
+  port: 8080
+
+news:
+  apikeys:
+    newsapi: "${NEWSAPI_KEY:your_newsapi_key_here}"
+    gnews: "${GNEWS_KEY:your_gnews_key_here}"
+  cache:
+    ttl: 3600 # 1 hour in seconds
+  scheduler:
+    cleanup:
+      enabled: true
+      cron: "0 0 2 * * ?" # Daily at 2 AM
+      retention-days: 7
+    refresh:
+      enabled: true
+      cron: "0 */30 * * * ?" # Every 30 minutes
+  providers:
+    newsapi:
+      enabled: true
+      base-url: "https://newsapi.org/v2"
+      timeout: 30000
+      max-articles: 100
+    gnews:
+      enabled: true
+      base-url: "https://gnews.io/api/v4"
+      timeout: 30000
+      max-articles: 100
+
+summary:
+  ai:
+    provider: "openai"
+    key: "${OPENAI_KEY:your_openai_key_here}"
+    enabled: false # Set to true when you have API key
+
+logging:
+  level:
+    com.sourav.aurora: INFO
+    org.springframework.web: DEBUG
