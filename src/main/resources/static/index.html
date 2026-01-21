@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌌 Aurora - Smart News Digest Reader</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        aurora: {
+                            50: '#f0f9ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                            900: '#1e3a8a'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 dark:bg-gray-900 transition-colors duration-300">
+    <!-- Header -->
+    <header class="bg-white dark:bg-gray-800 shadow-sm border-b border-gray-200 dark:border-gray-700">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-aurora-600 dark:text-aurora-400">🌌 Aurora</h1>
+                    <span class="ml-2 text-sm text-gray-500 dark:text-gray-400">Smart News Digest</span>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button id="refreshBtn" class="bg-aurora-500 hover:bg-aurora-600 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors">
+                        Refresh News
+                    </button>
+                    <button id="darkModeToggle" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors">
+                        <span class="dark:hidden">🌙</span>
+                        <span class="hidden dark:inline">☀️</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Filters -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-6 mb-8 border border-gray-200 dark:border-gray-700">
+            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">Filters</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Country</label>
+                    <select id="countryFilter" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <option value="">All Countries</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Language</label>
+                    <select id="languageFilter" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <option value="">All Languages</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Category</label>
+                    <select id="categoryFilter" class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                        <option value="">All Categories</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Keyword</label>
+                    <input type="text" id="keywordFilter" placeholder="Search news..." class="w-full p-2 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white">
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading -->
+        <div id="loading" class="hidden text-center py-8">
+            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-aurora-500"></div>
+            <p class="mt-2 text-gray-600 dark:text-gray-400">Loading news...</p>
+        </div>
+
+        <!-- News Grid -->
+        <div id="newsGrid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+            <!-- News cards will be inserted here -->
+        </div>
+
+        <!-- Pagination -->
+        <div id="pagination" class="flex justify-center items-center space-x-4">
+            <button id="prevBtn" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                Previous
+            </button>
+            <span id="pageInfo" class="text-gray-600 dark:text-gray-400"></span>
+            <button id="nextBtn" class="px-4 py-2 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-600 disabled:opacity-50 disabled:cursor-not-allowed">
+                Next
+            </button>
+        </div>
+
+        <!-- Stats -->
+        <div id="stats" class="mt-8 text-center text-sm text-gray-500 dark:text-gray-400">
+            <!-- Stats will be inserted here -->
+        </div>
+    </div>
+
+    <script>
+        // Global state
+        let currentPage = 0;
+        let totalPages = 0;
+        let isLoading = false;
+
+        // DOM elements
+        const newsGrid = document.getElementById('newsGrid');
+        const loading = document.getElementById('loading');
+        const pagination = document.getElementById('pagination');
+        const pageInfo = document.getElementById('pageInfo');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const stats = document.getElementById('stats');
+
+        // Filter elements
+        const countryFilter = document.getElementById('countryFilter');
+        const languageFilter = document.getElementById('languageFilter');
+        const categoryFilter = document.getElementById('categoryFilter');
+        const keywordFilter = document.getElementById('keywordFilter');
+
+        // Dark mode
+        function initDarkMode() {
+            const isDark = localStorage.getItem('darkMode') === 'true' || 
+                          (!localStorage.getItem('darkMode') && window.matchMedia('(prefers-color-scheme: dark)').matches);
+            
+            if (isDark) {
+                document.documentElement.classList.add('dark');
+            }
+        }
+
+        darkModeToggle.addEventListener('click', () => {
+            document.documentElement.classList.toggle('dark');
+            localStorage.setItem('darkMode', document.documentElement.classList.contains('dark'));
+        });
+
+        // API calls
+        async function fetchNews(page = 0) {
+            if (isLoading) return;
+            
+            isLoading = true;
+            showLoading(true);
+
+            const params = new URLSearchParams({
+                page: page.toString(),
+                size: '12'
+            });
+
+            if (countryFilter.value) params.append('country', countryFilter.value);
+            if (languageFilter.value) params.append('language', languageFilter.value);
+            if (categoryFilter.value) params.append('category', categoryFilter.value);
+            if (keywordFilter.value.trim()) params.append('keyword', keywordFilter.value.trim());
+
+            try {
+                const response = await fetch(`/api/news?${params}`);
+                const data = await response.json();
+                
+                displayNews(data.articles);
+                updatePagination(data);
+                updateFilters(data);
+                updateStats(data);
+                
+                currentPage = data.currentPage;
+                totalPages = data.totalPages;
+                
+            } catch (error) {
+                console.error('Error fetching news:', error);
+                showError('Failed to load news. Please try again.');
+            } finally {
+                isLoading = false;
+                showLoading(false);
+            }
+        }
+
+        async function refreshNews() {
+            if (isLoading) return;
+            
+            refreshBtn.textContent = 'Refreshing...';
+            refreshBtn.disabled = true;
+
+            const params = new URLSearchParams();
+            if (countryFilter.value) params.append('country', countryFilter.value);
+            if (languageFilter.value) params.append('language', languageFilter.value);
+            if (categoryFilter.value) params.append('category', categoryFilter.value);
+            if (keywordFilter.value.trim()) params.append('keyword', keywordFilter.value.trim());
+
+            try {
+                const response = await fetch(`/api/news/refresh?${params}`, { method: 'POST' });
+                const result = await response.json();
+                
+                if (result.status === 'success') {
+                    // Wait a moment for the refresh to complete, then reload
+                    setTimeout(() => fetchNews(0), 2000);
+                } else {
+                    showError(result.message || 'Failed to refresh news');
+                }
+            } catch (error) {
+                console.error('Error refreshing news:', error);
+                showError('Failed to refresh news. Please try again.');
+            } finally {
+                refreshBtn.textContent = 'Refresh News';
+                refreshBtn.disabled = false;
+            }
+        }
+
+        // Display functions
+        function displayNews(articles) {
+            newsGrid.innerHTML = '';
+            
+            if (!articles || articles.length === 0) {
+                newsGrid.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <p class="text-gray-500 dark:text-gray-400 text-lg">No news articles found.</p>
+                        <p class="text-gray-400 dark:text-gray-500 text-sm mt-2">Try adjusting your filters or refresh the news.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            articles.forEach(article => {
+                const card = createNewsCard(article);
+                newsGrid.appendChild(card);
+            });
+        }
+
+        function createNewsCard(article) {
+            const card = document.createElement('div');
+            card.className = 'bg-white dark:bg-gray-800 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 overflow-hidden hover:shadow-md transition-shadow';
+            
+            const publishedDate = article.publishedAt ? new Date(article.publishedAt).toLocaleDateString() : 'Unknown date';
+            const summary = article.summary || article.description || '';
+            const truncatedSummary = summary.length > 150 ? summary.substring(0, 150) + '...' : summary;
+            
+            card.innerHTML = `
+                ${article.imageUrl ? `<img src="${article.imageUrl}" alt="${article.title}" class="w-full h-48 object-cover" onerror="this.style.display='none'">` : ''}
+                <div class="p-6">
+                    <div class="flex items-center justify-between mb-2">
+                        <span class="text-xs font-medium text-aurora-600 dark:text-aurora-400 bg-aurora-50 dark:bg-aurora-900/20 px-2 py-1 rounded">
+                            ${article.source}
+                        </span>
+                        <span class="text-xs text-gray-500 dark:text-gray-400">${publishedDate}</span>
+                    </div>
+                    <h3 class="font-semibold text-gray-900 dark:text-white mb-2 line-clamp-2 leading-tight">
+                        ${article.title}
+                    </h3>
+                    <p class="text-gray-600 dark:text-gray-300 text-sm mb-4 line-clamp-3">
+                        ${truncatedSummary}
+                    </p>
+                    <div class="flex items-center justify-between">
+                        <div class="flex space-x-2 text-xs">
+                            ${article.category ? `<span class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded">${article.category}</span>` : ''}
+                            ${article.country ? `<span class="bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 px-2 py-1 rounded">${article.country.toUpperCase()}</span>` : ''}
+                        </div>
+                        <a href="${article.url}" target="_blank" rel="noopener noreferrer" 
+                           class="text-aurora-600 dark:text-aurora-400 hover:text-aurora-700 dark:hover:text-aurora-300 text-sm font-medium">
+                            Read more →
+                        </a>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        function updatePagination(data) {
+            pageInfo.textContent = `Page ${data.currentPage + 1} of ${data.totalPages} (${data.totalElements} articles)`;
+            prevBtn.disabled = !data.hasPrevious;
+            nextBtn.disabled = !data.hasNext;
+        }
+
+        function updateFilters(data) {
+            updateSelectOptions(countryFilter, data.availableCountries);
+            updateSelectOptions(languageFilter, data.availableLanguages);
+            updateSelectOptions(categoryFilter, data.availableCategories);
+        }
+
+        function updateSelectOptions(select, options) {
+            const currentValue = select.value;
+            const firstOption = select.firstElementChild;
+            
+            // Clear existing options except the first one
+            select.innerHTML = '';
+            select.appendChild(firstOption);
+            
+            // Add new options
+            options.forEach(option => {
+                const optionElement = document.createElement('option');
+                optionElement.value = option;
+                optionElement.textContent = option.toUpperCase();
+                select.appendChild(optionElement);
+            });
+            
+            // Restore previous selection if it still exists
+            if (options.includes(currentValue)) {
+                select.value = currentValue;
+            }
+        }
+
+        function updateStats(data) {
+            stats.innerHTML = `
+                Showing ${data.articles.length} of ${data.totalElements} articles | 
+                ${data.availableSources.length} sources available
+            `;
+        }
+
+        function showLoading(show) {
+            loading.classList.toggle('hidden', !show);
+            newsGrid.classList.toggle('opacity-50', show);
+        }
+
+        function showError(message) {
+            newsGrid.innerHTML = `
+                <div class="col-span-full text-center py-12">
+                    <p class="text-red-500 text-lg">⚠️ ${message}</p>
+                </div>
+            `;
+        }
+
+        // Event listeners
+        prevBtn.addEventListener('click', () => {
+            if (currentPage > 0) {
+                fetchNews(currentPage - 1);
+            }
+        });
+
+        nextBtn.addEventListener('click', () => {
+            if (currentPage < totalPages - 1) {
+                fetchNews(currentPage + 1);
+            }
+        });
+
+        refreshBtn.addEventListener('click', refreshNews);
+
+        // Filter change handlers
+        [countryFilter, languageFilter, categoryFilter].forEach(filter => {
+            filter.addEventListener('change', () => fetchNews(0));
+        });
+
+        // Debounced keyword search
+        let keywordTimeout;
+        keywordFilter.addEventListener('input', () => {
+            clearTimeout(keywordTimeout);
+            keywordTimeout = setTimeout(() => fetchNews(0), 500);
+        });
+
+        // Initialize
+        initDarkMode();
+        fetchNews(0);
+    </script>
+</body>
+</html>
