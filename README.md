@@ -160,24 +160,6 @@ curl -X POST "http://localhost:8080/api/news/refresh"
 
 ---
 
-## Suggested Next Features
-
-Here are features to show off more skills:
-
-| Feature | Skills demonstrated |
-|---------|-------------------|
-| **OpenAI/Claude summarization** | LLM API integration, prompt engineering |
-| **User auth (JWT)** | Spring Security, stateless auth, React auth context |
-| **PostgreSQL persistence** | Production DB, Flyway migrations, connection pooling |
-| **Email digests** | Spring Mail / SendGrid, scheduled jobs |
-| **Sentiment analysis** | NLP, external API integration, badge UI |
-| **Reading history** | IndexedDB, analytics dashboard |
-| **Push notifications** | Service workers, Web Push API |
-| **CI/CD pipeline** | GitHub Actions, Docker Hub, automated testing |
-| **Redis cache** | Distributed caching, cache invalidation patterns |
-
----
-
 ## Development Notes
 
 - The H2 console is available at `http://localhost:8080/h2-console` (JDBC: `jdbc:h2:mem:aurora`, user: `sa`)
