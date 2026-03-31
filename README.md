@@ -1,292 +1,191 @@
-# 🌌 Aurora – Smart News Digest Reader 2.0
+# Aurora — Intelligent News Aggregator
 
-Aurora is an intelligent news aggregation and summarization system built with Java 25 and Spring Boot. Filter news by **country**, **language**, **category**, and **keyword**, and view AI-generated summaries.
-
----
-
-## 🚀 Features
-
-- **Real API Integration**: Live data from NewsAPI and GNews with proper error handling
-- **Java 25 Virtual Threads**: High-performance concurrent processing for API calls
-- **Automatic Scheduling**: Auto-refresh news every 30 minutes, cleanup old articles daily
-- **Advanced Architecture**: MVC pattern, Strategy pattern, Template method pattern
-- **Constants Management**: Centralized API endpoints and application messages
-- **Comprehensive Error Handling**: Global exception handling with proper HTTP status codes
-- **Provider Health Monitoring**: Real-time provider status and health checks
-- **Smart Caching**: In-memory caching with TTL and cache warming
-- **Responsive UI**: Tailwind CSS frontend with dark mode and real-time search
-- **Production Ready**: Proper logging, metrics, validation, and configuration
+A full-stack news aggregation platform with a **React + Vite** frontend and **Spring Boot** backend, containerized with Docker Compose.
 
 ---
 
-## 🧩 Tech Stack
+## Stack
 
-- **Backend**: Java 25 LTS, Spring Boot 3.5+, Spring Data JPA
-- **Database**: H2 in-memory database
-- **Frontend**: Tailwind CSS, Vanilla JavaScript
-- **Concurrency**: Virtual Threads (Project Loom)
-- **Build**: Maven
-- **Libraries**: Lombok, Jackson, Spring Cache
+| Layer | Technology |
+|-------|-----------|
+| Frontend | React 18, TypeScript, Vite 5, Tailwind CSS v3 |
+| State | TanStack Query v5 (server), Zustand (client) |
+| Backend | Java 21+, Spring Boot 3.5, Virtual Threads |
+| Database | H2 in-memory (dev) |
+| Packaging | Docker, nginx, multi-stage builds |
 
 ---
 
-## 🧭 Setup Instructions
-
-### 1. Prerequisites
-
-- Java 25 LTS installed
-- Maven 3.6+ installed
-- API keys from news providers (optional for testing)
-
-### 2. Clone and Build
+## Quick Start — Docker
 
 ```bash
-git clone https://github.com/<your-username>/aurora.git
-cd aurora
-mvn clean compile
-```
+# 1. Copy env file and fill in your API keys
+cp .env.example .env
 
-### 3. Configure API Keys (Optional)
+# 2. Start everything
+docker compose up --build
 
-Edit `src/main/resources/application.yaml`:
-
-```yaml
-news:
-  apikeys:
-    newsapi: "YOUR_NEWSAPI_KEY" # Get from https://newsapi.org
-    gnews: "YOUR_GNEWS_KEY" # Get from https://gnews.io
-```
-
-### 4. Run Application
-
-```bash
-mvn spring-boot:run
-```
-
-### 5. Access the Application
-
-- **Main UI**: [http://localhost:8080](http://localhost:8080)
-- **H2 Console**: [http://localhost:8080/h2-console](http://localhost:8080/h2-console)
-  - JDBC URL: `jdbc:h2:mem:aurora`
-  - Username: `sa`
-  - Password: (empty)
-
----
-
-## 📦 Project Structure
-
-```
-aurora/
-├─ src/main/java/com/sourav/aurora/
-│  ├─ controller/
-│  │  └─ NewsController.java           # REST API endpoints with constants
-│  ├─ service/
-│  │  ├─ NewsService.java              # Main business logic
-│  │  ├─ NewsProviderService.java      # Provider management service
-│  │  ├─ NewsSchedulerService.java     # Automatic scheduling service
-│  │  └─ SummarizerService.java        # Article summarization
-│  ├─ provider/
-│  │  ├─ NewsProvider.java             # Provider interface (Strategy pattern)
-│  │  ├─ AbstractNewsProvider.java     # Template method pattern base
-│  │  ├─ NewsApiProvider.java          # NewsAPI real implementation
-│  │  └─ GNewsProvider.java            # GNews real implementation
-│  ├─ model/
-│  │  └─ Article.java                  # JPA entity with Lombok
-│  ├─ repository/
-│  │  └─ ArticleRepository.java        # JPA repository with custom queries
-│  ├─ dto/
-│  │  ├─ ArticleDto.java               # Data transfer objects
-│  │  └─ NewsResponse.java
-│  ├─ config/
-│  │  ├─ VirtualThreadConfig.java      # Java 25 virtual threads + WebClient
-│  │  ├─ CacheConfig.java              # Caching configuration
-│  │  └─ NewsProviderConfig.java       # Provider configuration properties
-│  ├─ constants/
-│  │  ├─ ApiConstants.java             # API endpoint constants
-│  │  └─ ApplicationConstants.java     # Application messages & constants
-│  ├─ exception/
-│  │  ├─ NewsProviderException.java    # Custom provider exceptions
-│  │  └─ GlobalExceptionHandler.java   # Global error handling
-│  └─ AuroraApplication.java           # Main application class
-├─ src/main/resources/
-│  ├─ static/
-│  │  └─ index.html                    # Responsive frontend UI
-│  └─ application.yaml                 # Comprehensive configuration
-├─ src/test/
-│  └─ java/com/sourav/aurora/
-│     └─ AuroraApplicationTests.java   # Comprehensive tests
-└─ pom.xml                             # Maven dependencies with WebFlux
+# Frontend → http://localhost:3000
+# Backend API → http://localhost:8080/api
 ```
 
 ---
 
-## 🔗 API Endpoints
+## Local Development
 
-| Endpoint                | Method | Description                           | Parameters                                                   |
-| ----------------------- | ------ | ------------------------------------- | ------------------------------------------------------------ |
-| `/api/news`             | GET    | Fetch filtered news with pagination   | `country`, `language`, `category`, `keyword`, `page`, `size` |
-| `/api/news/today`       | GET    | Get today's cached articles           | None                                                         |
-| `/api/news/search`      | GET    | Search news by keyword                | `keyword` (required), `page`, `size`                         |
-| `/api/news/refresh`     | POST   | Refresh news from providers (async)   | `country`, `language`, `category`, `keyword`                 |
-| `/api/news/cache/clear` | POST   | Clear news cache                      | None                                                         |
-| `/api/providers`        | GET    | List active/all providers with status | None                                                         |
-| `/api/providers/active` | GET    | List only active providers            | None                                                         |
-| `/api/providers/status` | GET    | Detailed provider health status       | None                                                         |
-| `/api/health`           | GET    | Health check endpoint                 | None                                                         |
-| `/api/metrics`          | GET    | Basic application metrics             | None                                                         |
-
-### Example API Calls
+### Backend
 
 ```bash
-# Get all news (first page)
-curl "http://localhost:8080/api/news"
+cd backend
+./mvnw spring-boot:run
+# or set env vars:
+NEWSAPI_KEY=your_key GNEWS_KEY=your_key ./mvnw spring-boot:run
+```
 
-# Get US business news in English
-curl "http://localhost:8080/api/news?country=us&category=business&language=en"
+Backend runs at `http://localhost:8080`
 
-# Search for technology news
-curl "http://localhost:8080/api/news?keyword=technology"
+### Frontend
 
-# Refresh news cache
+```bash
+cd frontend
+npm install
+npm run dev
+# Dev server with proxy to localhost:8080
+```
+
+Frontend runs at `http://localhost:5173`
+
+---
+
+## API Keys
+
+| Provider | Free Tier | Register |
+|----------|-----------|---------|
+| NewsAPI | 100 req/day | https://newsapi.org/register |
+| GNews | 100 req/day | https://gnews.io/ |
+
+---
+
+## Project Structure
+
+```
+Aurora/
+├── backend/                     # Spring Boot application
+│   ├── src/
+│   │   ├── main/java/com/sourav/aurora/
+│   │   │   ├── controller/      # REST controllers
+│   │   │   ├── service/         # Business logic + scheduling
+│   │   │   ├── provider/        # NewsAPI & GNews (Strategy pattern)
+│   │   │   ├── model/           # JPA entities
+│   │   │   ├── repository/      # Spring Data JPA
+│   │   │   ├── dto/             # Request/response DTOs
+│   │   │   ├── config/          # Virtual threads, cache, providers
+│   │   │   ├── constants/       # API & app constants
+│   │   │   └── exception/       # Global error handling
+│   │   └── resources/
+│   │       └── application.yaml
+│   ├── Dockerfile
+│   └── pom.xml
+│
+├── frontend/                    # React + Vite application
+│   ├── src/
+│   │   ├── components/
+│   │   │   ├── layout/          # Header, Layout
+│   │   │   ├── news/            # ArticleCard, ArticleGrid, FilterPanel
+│   │   │   ├── providers/       # ProviderStatus widget
+│   │   │   └── ui/              # Button, Badge, Skeleton
+│   │   ├── hooks/               # useNews, useProviders (React Query)
+│   │   ├── pages/               # HomePage, BookmarksPage, ProvidersPage
+│   │   ├── services/            # Axios API client
+│   │   ├── store/               # Zustand stores (bookmarks, UI)
+│   │   ├── types/               # TypeScript interfaces
+│   │   └── utils/               # Formatting, category config
+│   ├── Dockerfile
+│   ├── nginx.conf
+│   └── package.json
+│
+├── docker-compose.yml
+├── .env.example
+└── README.md
+```
+
+---
+
+## API Reference
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/news` | GET | Paginated news feed |
+| `/api/news/search` | GET | Keyword search |
+| `/api/news/today` | GET | Today's articles |
+| `/api/news/refresh` | POST | Trigger provider refresh |
+| `/api/news/cache/clear` | POST | Clear in-memory cache |
+| `/api/providers` | GET | All providers + status |
+| `/api/providers/status` | GET | Provider health detail |
+| `/api/health` | GET | Service health check |
+| `/api/metrics` | GET | Runtime metrics |
+
+**Query parameters for `/api/news`**: `country`, `language`, `category`, `keyword`, `page`, `size`
+
+```bash
+# Examples
+curl "http://localhost:8080/api/news?country=us&category=technology&page=0&size=20"
+curl "http://localhost:8080/api/news/search?keyword=AI"
 curl -X POST "http://localhost:8080/api/news/refresh"
 ```
 
 ---
 
-## 🎯 Usage Guide
+## Features
 
-### 1. First Run
+**Frontend**
+- Aurora-themed gradient UI with dark mode
+- Grid / list view toggle
+- Per-article bookmarks (persisted in localStorage)
+- Article share (Web Share API with clipboard fallback)
+- Skeleton loading states
+- Trending topic quick-filters
+- Provider health widget
+- Reading time estimates
+- Toast notifications
 
-- Start the application
-- Click "Refresh News" to fetch initial articles
-- Use filters to narrow down results
-
-### 2. Filtering News
-
-- **Country**: Select specific countries (US, GB, CA, etc.)
-- **Language**: Filter by language (EN, DE, FR, etc.)
-- **Category**: Choose categories (business, technology, sports, etc.)
-- **Keyword**: Search within article titles and descriptions
-
-### 3. Features
-
-- **Dark Mode**: Toggle with the moon/sun icon
-- **Pagination**: Navigate through multiple pages of results
-- **Real-time Search**: Keyword search with 500ms debounce
-- **Responsive Design**: Works on desktop and mobile
-
----
-
-## 🔧 Configuration Options
-
-### Application Properties
-
-```yaml
-# Database Configuration
-spring:
-  datasource:
-    url: jdbc:h2:mem:aurora
-  jpa:
-    hibernate:
-      ddl-auto: create-drop
-
-# News Provider API Keys
-news:
-  apikeys:
-    newsapi: "${NEWSAPI_KEY:your_newsapi_key_here}"
-    gnews: "${GNEWS_KEY:your_gnews_key_here}"
-  cache:
-    ttl: 3600 # Cache TTL in seconds
-
-# AI Summarization (Future feature)
-summary:
-  ai:
-    enabled: false
-    provider: "openai"
-    key: "${OPENAI_KEY:your_openai_key_here}"
-```
-
-### Environment Variables
-
-```bash
-export NEWSAPI_KEY="your_actual_newsapi_key"
-export GNEWS_KEY="your_actual_gnews_key"
-export OPENAI_KEY="your_openai_key"  # Optional
-```
+**Backend**
+- Multi-provider architecture (Strategy + Template Method patterns)
+- Java Virtual Threads for concurrent fetching
+- Smart caching with TTL (Spring Cache)
+- Auto-refresh scheduler (every 30 min)
+- Nightly cleanup of old articles
+- Paginated, filterable API
+- Global exception handling
 
 ---
 
-## 🧪 Testing
+## Suggested Next Features
 
-### Run Tests
+Here are features to show off more skills:
 
-```bash
-mvn test
-```
-
-### Manual Testing
-
-1. Start the application
-2. Open [http://localhost:8080](http://localhost:8080)
-3. Try different filter combinations
-4. Test the refresh functionality
-5. Check the H2 console for data persistence
-
----
-
-## 🚀 Deployment
-
-### Production Build
-
-```bash
-mvn clean package
-java -jar target/aurora-0.0.1-SNAPSHOT.jar
-```
-
-### Docker (Optional)
-
-```dockerfile
-FROM openjdk:25-jdk-slim
-COPY target/aurora-0.0.1-SNAPSHOT.jar app.jar
-EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "/app.jar"]
-```
+| Feature | Skills demonstrated |
+|---------|-------------------|
+| **OpenAI/Claude summarization** | LLM API integration, prompt engineering |
+| **User auth (JWT)** | Spring Security, stateless auth, React auth context |
+| **PostgreSQL persistence** | Production DB, Flyway migrations, connection pooling |
+| **Email digests** | Spring Mail / SendGrid, scheduled jobs |
+| **Sentiment analysis** | NLP, external API integration, badge UI |
+| **Reading history** | IndexedDB, analytics dashboard |
+| **Push notifications** | Service workers, Web Push API |
+| **CI/CD pipeline** | GitHub Actions, Docker Hub, automated testing |
+| **Redis cache** | Distributed caching, cache invalidation patterns |
 
 ---
 
-## 🔮 Future Enhancements
+## Development Notes
 
-- [ ] AI-powered article summarization with OpenAI integration
-- [ ] User preferences and personalization
-- [ ] Email digest subscriptions
-- [ ] Advanced analytics and trending topics
-- [ ] Social media integration
-- [ ] Mobile app development
-- [ ] Multi-language UI support
-- [ ] Article bookmarking and favorites
+- The H2 console is available at `http://localhost:8080/h2-console` (JDBC: `jdbc:h2:mem:aurora`, user: `sa`)
+- The Vite dev server proxies `/api/*` to `localhost:8080` — no CORS issues in dev
+- In Docker, nginx proxies `/api/*` to the `backend` service — single-origin, no CORS needed
 
 ---
 
-## 🤝 Contributing
+## License
 
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 🙏 Acknowledgments
-
-- [NewsAPI](https://newsapi.org) for news data
-- [GNews](https://gnews.io) for additional news sources
-- [Tailwind CSS](https://tailwindcss.com) for styling
-- [Spring Boot](https://spring.io/projects/spring-boot) for the framework
-- Java Virtual Threads for high-performance concurrency
+MIT — see [LICENSE](LICENSE)

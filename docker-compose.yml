@@ -1,0 +1,42 @@
+services:
+  # ─── Backend (Spring Boot) ────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: aurora-backend
+    restart: unless-stopped
+    environment:
+      NEWSAPI_KEY: ${NEWSAPI_KEY:72ab7ac2a5ba440ca39b376387aa6797}
+      GNEWS_KEY: ${GNEWS_KEY:fbaef586f0e0c24147666bbe86245786}
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-default}
+      JAVA_OPTS: "-Xms256m -Xmx512m"
+    ports:
+      - "8080:8080"
+    healthcheck:
+      test: [ "CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/api/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    networks:
+      - aurora-net
+
+  # ─── Frontend (React → nginx) ─────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: aurora-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - aurora-net
+
+networks:
+  aurora-net:
+    driver: bridge
